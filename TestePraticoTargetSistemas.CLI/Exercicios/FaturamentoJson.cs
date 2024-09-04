@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 using TestePraticoTargetSistemas.CLI.Exercicios.DadosFaturamento;
 
@@ -14,27 +13,22 @@ public class FaturamentoJson : IExercicio<ResultadoFaturamento?>
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    private readonly Faturamentos _faturamentos;
+    private readonly List<FaturamentoDiario> _faturamentos;
 
     public string Nome => nameof(FaturamentoJson);
 
-    private FaturamentoJson(Faturamentos faturamentos)
+    private FaturamentoJson(List<FaturamentoDiario> faturamentos)
     {
         _faturamentos = faturamentos;
-    }
-
-    public static FaturamentoJson? ObterResultadoFaturamentoLista(Faturamentos faturamentos)
-    {
-        return new(faturamentos);
     }
 
     public static FaturamentoJson? ObterResultadoFaturamentoJson(string infoFaturamento)
     {
         try
         {
-            Faturamentos? informacoes = JsonSerializer.Deserialize<Faturamentos>(infoFaturamento, _opcoesSerializacao);
+            List<FaturamentoDiario> informacoes = JsonSerializer.Deserialize<List<FaturamentoDiario>>(infoFaturamento, _opcoesSerializacao) ?? [];
 
-            return new(informacoes ?? new([]));
+            return new(informacoes);
         }
         catch (JsonException jsonException)
         {
@@ -50,20 +44,13 @@ public class FaturamentoJson : IExercicio<ResultadoFaturamento?>
             Console.WriteLine($"Ocorreu um erro ao processar o arquivo JSON{propriedadesErro}.\n{jsonException.Message}");
 
             Console.WriteLine("[INFO]: O arquivo JSON precisa seguir esse formato:" + """
-                {
-                    "dados": [
-                        {
-                            "data": "<DATA EM DD/MM/YYYY>",
-                            "faturamento": <NUMERO>
-                        }, ...
-                    ]
-                }
+                [
+                    {
+                        "dia": "<NUMERO>",
+                        "valor": <NUMERO>
+                    }, ...
+                ]
                 """);
-
-            if (caminho.Contains("data"))
-            {
-                Console.WriteLine("[INFO]: Utilize o formato de data DD/MM/YYYY");
-            }
         }
         catch (NotSupportedException)
         {
@@ -79,44 +66,28 @@ public class FaturamentoJson : IExercicio<ResultadoFaturamento?>
 
     public ResultadoFaturamento? Executar()
     {
-        if (_faturamentos.Dados.Count == 0)
+        if (_faturamentos.Count == 0)
         {
             Console.WriteLine("Nenhum faturamento para processar");
             return null;
         }
 
-        CultureInfo culture = CultureInfo.GetCultureInfo("pt-BR");
-
-        List<(DateOnly Data, decimal Faturamento)> faturamentos = _faturamentos.Dados
-            .Select(f => (DateOnly.Parse(f.Data, culture), f.Faturamento))
-            .ToList();
-
-        // Obter o mês que será processado
-        int mesDeCalculo = faturamentos
-            .First()
-            .Data.Month;
-
-        // Somente incluir os faturamentos do mês de cálculo
-        var baseCalculo = faturamentos
-            .Where(info => info.Data.Month == mesDeCalculo)
-            .ToList();
-
         // Obter o menor faturamento do mês
-        decimal menorFaturamento = baseCalculo
-            .Min(info => info.Faturamento);
+        decimal menorFaturamento = _faturamentos
+            .Min(info => info.Valor);
 
         // Obter o maior faturamento do mês
-        decimal maiorFaturamento = baseCalculo
-            .Max(info => info.Faturamento);
+        decimal maiorFaturamento = _faturamentos
+            .Max(info => info.Valor);
 
         // Obter a média de faturamento do mês
-        decimal mediaFaturamento = baseCalculo
-            .Where(info => info.Faturamento != 0.0m)
-            .Average(info => info.Faturamento);
+        decimal mediaFaturamento = _faturamentos
+            .Where(info => info.Valor != 0.0m)
+            .Average(info => info.Valor);
 
         // Obter o número de dias onde o faturamento foi maior do que a média mensal
-        int diasFaturamentoAcimaDaMedia = baseCalculo
-            .Count(info => info.Faturamento > mediaFaturamento);
+        int diasFaturamentoAcimaDaMedia = _faturamentos
+            .Count(info => info.Valor > mediaFaturamento);
 
         return new(menorFaturamento, maiorFaturamento, diasFaturamentoAcimaDaMedia);
     }
