@@ -230,11 +230,7 @@ internal class Program
         {
             caminhoArquivo = args[0];
             
-            if (!int.TryParse(args[1], out int numeroUsuario))
-            {
-                numero = numeroUsuario;
-            }
-            else
+            if (!int.TryParse(args[1], out numero))
             {
                 Console.WriteLine($"O número informado '{args[1]}' é inválido, usando valor padrão {numero}");
             }
