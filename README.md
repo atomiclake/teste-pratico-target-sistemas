@@ -1,5 +1,8 @@
 # Teste Técnico - Daniel Teixeira Duarte
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/atomiclake/teste-pratico-target-sistemas/dotnet.yml)
+![GitHub Release](https://img.shields.io/github/v/release/atomiclake/teste-pratico-target-sistemas)
+
 Candidato: Daniel Teixeira Duarte
 
 Repostas do teste técnico da Target Sistemas.
